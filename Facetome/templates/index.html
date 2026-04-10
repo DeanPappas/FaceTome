@@ -1,8 +1,22 @@
 {% extends "base.html" %}
 {% block content %}
-    {% if logged_in: %}
-        <p>Welcome, {{ user.name }}</p>
-    {% else %}
-        <p>Welcome new user</p>
+{{ ckeditor.load() }}
+{% if logged_in: %}
+<h1 style="padding-bottom:40px">Welcome, {{ user.name }}</h1>
+<div id="post-box">
+    {{ render_form(form) }}
+</div>
+{% else %}
+<h1 style="padding-bottom:50px">Welcome new user</h1>
+{% endif %}
+{% for post in posts: %}
+<div class="post">
+    <h2>{{ post.user.name }}</h2>
+    <p class="post_content">{{ post.content }}</p>
+    <i style="font-size:13px">{{ post.date }}</i>
+    {% if current_user.id == post.user_id %}
+    <a href="{{ url_for('delete_post', post_id=post.id) }}">✘</a>
     {% endif %}
+</div>
+{% endfor %}
 {% endblock %}

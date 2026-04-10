@@ -1,21 +1,31 @@
 <!DOCTYPE html>
+{% from 'bootstrap/form.html' import render_form %}
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>tsagdg</title>
-  </head>
-  <body>
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link href="../static/styles.css" rel="stylesheet">
+    <title>FaceTome</title>
+</head>
+<body>
+<section id="top-bar">
+    <h1 style="padding-right:40px">FaceTome</h1>
+</section>
+<section id="sidebar">
     <nav>
-        <a href="{{ url_for('register') }}">Register</a>
+        <li><a href="{{ url_for('home') }}">Home</a></li>
+        <li><a href="{{ url_for('register') }}">Register</a></li>
         {% if not logged_in: %}
-        <a href="{{ url_for('login') }}">Log In</a>
+        <li><a href="{{ url_for('login') }}">Log In</a></li>
         {% else: %}
-        <a href="{{ url_for('logout') }}">Log Out</a>
+        <li><a href="{{ url_for('logout') }}">Log Out</a></li>
         {% endif %}
     </nav>
+</section>
+<section id="main-content">
     {% block content %}
-    {% endblock %}
-  </body>
+</section>
+{% endblock %}
+</body>
 </html>
