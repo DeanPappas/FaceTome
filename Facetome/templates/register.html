@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
-    {% with messages = get_flashed_messages() %}
+<div class="form-box">
+        {% with messages = get_flashed_messages() %}
         {% if messages %}
             {% for message in messages %}
                 <p>{{ message }}</p>
@@ -8,4 +9,5 @@
         {% endif %}
     {% endwith %}
     {{ render_form(form) }}
+</div>
 {% endblock %}

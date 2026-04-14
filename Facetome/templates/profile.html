@@ -1,10 +1,31 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% block content %}
+{{ ckeditor.load() }}
+<div id="profile-info">
+    {% if current_user.id == user.id %}
+    {{ render_form(form) }}
+    <a href="{{ url_for('change_password') }}">Change Password?</a>
+    {% else %}
+    <h2>{{ user.name }}'s Profile</h2>
+    <p>Birthday: {{ user.birthday }}</p>
+    <p>{{ user.name }}'s contact info: {{ user.email }}</p>
+    <p>Bio: {{ user.bio }}</p>
+    {% endif %}
+</div>
+{% if current_user.id == user.id %}
+<h2 style="text-align: left">Your Posts:</h2>
+{% else %}
+<h2 style="text-align: left">{{ user.name }}'s Posts:</h2>
+{% endif %}
+{% for post in posts: %}
+<div class="post">
+    <p class="post-content">{{ post.content }}</p>
+    <i style="font-size:13px">{{ post.date }}</i>
+    {% if current_user.id == post.user_id %}
+    <a href="{{ url_for('delete_post', post_id=post.id) }}">✘</a>
+    {% endif %}
+</div>
+{% endfor %}
 
-</body>
-</html>
+
+{% endblock %}

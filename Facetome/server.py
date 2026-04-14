@@ -5,7 +5,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import Integer, String, ForeignKey
 from flask_login import UserMixin, login_user, LoginManager, login_required, current_user, logout_user
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField
+from wtforms import StringField, SubmitField, PasswordField, TextAreaField
 from wtforms.fields.datetime import DateField
 from wtforms.validators import DataRequired, Email
 from flask_bootstrap import Bootstrap5
@@ -21,6 +21,7 @@ app.config['SECRET_KEY'] = 'secret-key-goes-here'
 class Base(DeclarativeBase):
     pass
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+# app.config['CKEDITOR_SERVE_LOCAL'] = True
 db = SQLAlchemy(model_class=Base)
 db.init_app(app)
 
@@ -37,17 +38,22 @@ class User(db.Model, UserMixin): # <-- UserMixin covers the required fields for 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     email: Mapped[str] = mapped_column(String(100), unique=True)
     password: Mapped[str] = mapped_column(String(100))
-    name: Mapped[str] = mapped_column(String(1000))
+    name: Mapped[str] = mapped_column(String(100))
+    birthday: Mapped[str] = mapped_column(String(100))
+    bio: Mapped[str] = mapped_column(String(500))
     posts = relationship("Post", back_populates="user")
 
 
 class Post(db.Model):
     __tablename__ = 'post'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    content: Mapped[str] = mapped_column(String(250))
+    content: Mapped[str] = mapped_column(String(500))
     date: Mapped[str] = mapped_column(String(30))
     user_id: Mapped[int] = mapped_column(Integer, db.ForeignKey("user.id"))
     user = relationship("User", back_populates="posts")
+
+with app.app_context():
+    db.create_all()
 
 # WTForms
 class RegisterForm(FlaskForm):
@@ -66,8 +72,17 @@ class PostForm(FlaskForm):
     content = CKEditorField('What\'s on your mind?', validators=[DataRequired()])
     post = SubmitField('Post')
 
-with app.app_context():
-    db.create_all()
+class ProfileForm(FlaskForm):
+    name = StringField('Name')
+    email = StringField('Email', validators=[Email()])
+    birthday = DateField('Birthday')
+    bio = TextAreaField('Bio', render_kw=dict(id='bio-textbox'))
+    submit = SubmitField('Edit Profile')
+
+class ChangePasswordForm(FlaskForm):
+    old_password = PasswordField('Old Password', validators=[DataRequired()])
+    new_password = PasswordField('New Password', validators=[DataRequired()])
+    submit = SubmitField('Change Password')
 
 @app.route('/', methods=["GET", "POST"])
 def home():
@@ -80,12 +95,11 @@ def home():
     if request.method == "POST":
         post = Post(
             content = form.content.data,
-            date = str(dt.datetime.now()),
+            date = str(dt.datetime.now().strftime("%b %d, %Y %I:%M%p")),
             user_id = user.id
         )
         db.session.add(post)
         db.session.commit()
-        form = PostForm(content="SDDFASDFASDF")
         return redirect(url_for('home'))
     else:
         # Passing True or False if the user is authenticated.
@@ -112,7 +126,8 @@ def register():
             email=form.email.data,
             password=hash_and_salted_password,
             name=form.name.data,
-
+            birthday=form.birthday.data,
+            bio=f'{form.name.data} has not added a bio yet...'
         )
         db.session.add(new_user)
         db.session.commit()
@@ -120,7 +135,6 @@ def register():
         return redirect(url_for('home'))
     # Passing True or False if the user is authenticated.
     return render_template("register.html", logged_in=current_user.is_authenticated, form=form)
-
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
@@ -142,7 +156,48 @@ def login():
     # Passing True or False if the user is authenticated.
     return render_template("login.html", logged_in=current_user.is_authenticated, form=form)
 
-@login_required
+@app.route('/profile/<int:user_id>', methods=["GET", "POST"])
+def profile(user_id):
+    user_result = db.session.execute(db.select(User).where(User.id == user_id))
+    user = user_result.scalar()
+    posts_result = db.session.execute(db.select(Post).where(Post.user_id == user_id).order_by(Post.date.desc()))
+    posts = posts_result.scalars().all()
+    form = ProfileForm(
+        name=user.name,
+        email=user.email,
+        birthday=dt.datetime.strptime(user.birthday, '%Y-%m-%d'),
+        bio=user.bio
+    )
+    if request.method == 'POST':
+        user.name = form.name.data
+        user.email = form.email.data
+        user.birthday = form.birthday.data
+        user.bio = form.bio.data
+        db.session.commit()
+        return redirect(url_for('profile', user_id=user_id))
+    else:
+        return render_template("profile.html", logged_in=current_user.is_authenticated,
+                               user=user, posts=posts, form=form)
+
+@app.route('/change_password', methods=["GET", "POST"])
+def change_password():
+    form = ChangePasswordForm()
+    if request.method == "POST":
+        if not check_password_hash(current_user.password, form.old_password.data):
+            flash('Old password is incorrect, please try again.')
+            return redirect(url_for('change_password'))
+        else:
+            hash_and_salted_password = generate_password_hash(
+                form.new_password.data,
+                method='pbkdf2:sha256',
+                salt_length=8
+            )
+            current_user.password = hash_and_salted_password
+            db.session.commit()
+            return redirect(url_for('profile', user_id=current_user.id))
+    else:
+        return render_template("change_pw.html", logged_in=current_user.is_authenticated, form=form)
+
 @app.route('/delete/<int:post_id>')
 def delete_post(post_id):
     post = db.get_or_404(Post , post_id)

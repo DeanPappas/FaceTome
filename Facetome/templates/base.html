@@ -5,7 +5,14 @@
     <meta charset="utf-8"/>
     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <link href="../static/styles.css" rel="stylesheet">
+    <link href="../static/styles/styles.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&display=swap"
+          rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sekuya&display=swap" rel="stylesheet">
     <title>FaceTome</title>
 </head>
 <body>
@@ -14,18 +21,19 @@
 </section>
 <section id="sidebar">
     <nav>
-        <li><a href="{{ url_for('home') }}">Home</a></li>
-        <li><a href="{{ url_for('register') }}">Register</a></li>
+        <li><b><a href="{{ url_for('home') }}">Home</a></b></li>
         {% if not logged_in: %}
-        <li><a href="{{ url_for('login') }}">Log In</a></li>
+        <li><b><a href="{{ url_for('register') }}">Register</a></b></li>
+        <li><b><a href="{{ url_for('login') }}">Log In</a></b></li>
         {% else: %}
-        <li><a href="{{ url_for('logout') }}">Log Out</a></li>
+        <li><b><a href="{{ url_for('profile', user_id=current_user.id) }}">Profile</a></b></li>
+        <li><b><a href="{{ url_for('logout') }}">Log Out</a></b></li>
         {% endif %}
     </nav>
 </section>
 <section id="main-content">
     {% block content %}
+    {% endblock %}
 </section>
-{% endblock %}
 </body>
 </html>

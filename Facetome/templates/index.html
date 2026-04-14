@@ -1,17 +1,31 @@
 {% extends "base.html" %}
 {% block content %}
 {{ ckeditor.load() }}
+<!-- Added below script to modify CKEditor config, no other solutions seemed to work -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        if (CKEDITOR.instances.content) {
+            CKEDITOR.instances.content.destroy(true);
+        }
+        CKEDITOR.replace("content", {
+            uiColor: "#8971d0",
+            versionCheck: false,
+            enterMode: 2,
+        });
+    });
+</script>
+
 {% if logged_in: %}
-<h1 style="padding-bottom:40px">Welcome, {{ user.name }}</h1>
-<div id="post-box">
+<h1 style="padding-bottom:40px">Welcome, {{ user.name }}!</h1>
+<div class="post-box">
     {{ render_form(form) }}
 </div>
 {% else %}
-<h1 style="padding-bottom:50px">Welcome new user</h1>
+<h1 style="padding-bottom:50px">Welcome to FaceTome!</h1>
 {% endif %}
 {% for post in posts: %}
 <div class="post">
-    <h2>{{ post.user.name }}</h2>
+    <h2><a href="{{ url_for('profile', user_id=post.user.id) }}">{{ post.user.name }}</a></h2>
     <p class="post_content">{{ post.content }}</p>
     <i style="font-size:13px">{{ post.date }}</i>
     {% if current_user.id == post.user_id %}
@@ -19,4 +33,5 @@
     {% endif %}
 </div>
 {% endfor %}
+
 {% endblock %}
