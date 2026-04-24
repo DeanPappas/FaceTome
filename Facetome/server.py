@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, url_for, redirect, flash, send_from_directory
+from flask import Flask, render_template, request, url_for, redirect, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -21,7 +21,6 @@ app.config['SECRET_KEY'] = 'secret-key-goes-here'
 class Base(DeclarativeBase):
     pass
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
-# app.config['CKEDITOR_SERVE_LOCAL'] = True
 db = SQLAlchemy(model_class=Base)
 db.init_app(app)
 
@@ -179,6 +178,7 @@ def profile(user_id):
         return render_template("profile.html", logged_in=current_user.is_authenticated,
                                user=user, posts=posts, form=form)
 
+@login_required
 @app.route('/change_password', methods=["GET", "POST"])
 def change_password():
     form = ChangePasswordForm()
@@ -198,6 +198,7 @@ def change_password():
     else:
         return render_template("change_pw.html", logged_in=current_user.is_authenticated, form=form)
 
+@login_required
 @app.route('/delete/<int:post_id>')
 def delete_post(post_id):
     post = db.get_or_404(Post , post_id)
@@ -205,6 +206,7 @@ def delete_post(post_id):
     db.session.commit()
     return redirect(url_for('home'))
 
+@login_required
 @app.route('/logout')
 def logout():
     # Log out current user
@@ -213,4 +215,4 @@ def logout():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
